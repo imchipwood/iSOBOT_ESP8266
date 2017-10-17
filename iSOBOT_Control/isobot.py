@@ -316,7 +316,7 @@ class iSobot(object):
 	def sendCmd(self, cmd):
 		try:
 			url = "{}/cmd:{}".format(self._url, cmd)
-			r = requests.post(url, data={'cmd': cmd})
+			r = requests.post(url, data={'cmd': cmd}, timeout=5)
 			if r.status_code == 200:
 				print("HTTP Post success!")
 			else:
@@ -346,8 +346,8 @@ class iSobot(object):
 		# Needs carriage return
 		cmd += '\r'
 		
-		print("Command string: {}".format(c))
-		return c
+		print("Command string: {}".format(cmd))
+		return cmd
 
 	def isobotDoType1(self, action, channel=0, repeat=3):
 		# Shorthand function for lazy people
