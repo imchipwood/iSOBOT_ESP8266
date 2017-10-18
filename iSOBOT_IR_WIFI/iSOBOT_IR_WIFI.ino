@@ -28,7 +28,7 @@ unsigned long x = 0;
 unsigned long count = countin;
 unsigned long buf = 0;
 
-const char WiFiAPPSK[] = "isobot";
+const char WiFiAPPSK[] = "psuisobot";
 
 WiFiServer server(80);
 WiFiClient client;
