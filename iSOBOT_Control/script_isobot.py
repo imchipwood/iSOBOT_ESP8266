@@ -1,31 +1,25 @@
+__author__ = "chawood@pdx.edu"
 import argparse
 import os
 import json
-import threading
+from multiprocessing import Process
 from isobot_auto import iSobotAuto
-
-global debug
-
-
-def dprint(message):
-	global debug
-	if debug:
-		print(message)
 
 
 def parseArgs():
+	"""Parse input arguments"""
 	parser = argparse.ArgumentParser()
 	parser.add_argument('cfgfiles', type=str, help="Comma-separated list of config file paths. Maximum of 2 files")
-	parser.add_argument('-debug', '-d', type=bool, default=False, help="Enable debug messages")
+	parser.add_argument('-debug', '-d', action="store_true", help="Enable debug messages")
 	return parser.parse_args()
 
 
 def checkPaths(paths):
-	# check paths exist
+	"""Check config paths exist, attempt to recover if not"""
 	newPaths = []
 	for configPath in paths:
 		if not os.path.exists(configPath):
-			dprint("{} doesn't exist, trying cwd".format(configPath))
+			print("{} doesn't exist, trying cwd".format(configPath))
 			tmpConfigPath = os.path.join(os.getcwd(), configPath)
 			if os.path.exists(tmpConfigPath):
 				newPaths.append(configPath)
@@ -36,8 +30,8 @@ def checkPaths(paths):
 	return newPaths
 
 
-def parseConfigs(configPaths):
-	global debug
+def parseConfigs(configPaths, debug):
+	"""Parse JSON configuration files"""
 	iSobots = []
 	for configPath in configPaths:
 		with open(configPath, 'r') as inf:
@@ -53,33 +47,42 @@ def parseConfigs(configPaths):
 	return iSobots
 
 
-def main():
+def main(configPaths=None, dbg=None):
 	global debug
 	# get input args
-	parsedArgs = parseArgs()
-	configPaths = parsedArgs.cfgfiles.split(',')
-	debug = parsedArgs.debug
+	if not configPaths:
+		parsedArgs = parseArgs()
+		configPaths = parsedArgs.cfgfiles.split(',')
+		dbg = parsedArgs.debug
+	debug = dbg
 
 	# Check paths exist
 	configPaths = checkPaths(configPaths)
 
 	# Create iSobot objects
-	iSobots = parseConfigs(configPaths)
+	iSobots = parseConfigs(configPaths, debug)
 
 	# launch the iSobot threads
 	threads = []
 	for iSobot in iSobots:
-		thread = threading.Thread(target=iSobot.start)
+		thread = Process(target=iSobot.start)
 		print("Starting control thread for iSobot @ {}".format(iSobot.url))
 		thread.start()
 		threads.append(thread)
 
-	# wait for all threads to complete
-	for thread in threads:
-		thread.join()
+	# wait for all threads to complete, allowing keyboard interrupt to kill
+	try:
+		for thread in threads:
+			thread.join()
+	except KeyboardInterrupt:
+		for thread in threads:
+			thread.terminate()
 
 	print("All threads complete")
 
 
 if __name__ == "__main__":
-	main()
+	try:
+		main()
+	except KeyboardInterrupt:
+		pass
