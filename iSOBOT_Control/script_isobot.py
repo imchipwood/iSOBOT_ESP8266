@@ -67,10 +67,15 @@ def main():
 	iSobots = parseConfigs(configPaths)
 
 	# launch the iSobot threads
+	threads = []
 	for iSobot in iSobots:
 		thread = threading.Thread(target=iSobot.start)
 		print("Starting control thread for iSobot @ {}".format(iSobot.url))
 		thread.start()
+		threads.append(thread)
+
+	# wait for all threads to complete
+	for thread in threads:
 		thread.join()
 
 	print("All threads complete")
