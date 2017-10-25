@@ -14,17 +14,20 @@ class iSobotException(Exception):
 
 class iSobot(object):
 	def __init__(self, url="http://192.168.4.1", channel=0, debug=False):
+		print("{} - channel {}".format(url, channel))
 		self._url = None
 		self.url = url
 		assert channel in [0, 1]
 		self.channel = channel
 		self.debug = debug
 
-	def _ping(self, url):
+	@staticmethod
+	def _ping(url):
 		try:
-			ping.do_one(url, timeout=5)
+			print("{} - Checking connection ".format(url))
+			ping.do_one(url, timeout=5, psize=1)
 		except socket.error as e:
-			print("ERROR Can't connect to {}".format(url))
+			print("{} - ERROR Can't connect".format(url))
 			raise e
 
 	@property
@@ -82,7 +85,7 @@ class iSobot(object):
 
 	def makeCmd(self, cmdType=1, cmd1=0, cmd2=0):
 		if cmdType not in [0, 1]:
-			raise iSobotException("Channel or command type invalid. Valid channels/types are '0' and '1'")
+			raise iSobotException("{} - Channel or command type invalid. Valid channels/types are '0' and '1'".format(self.url))
 
 		# param is constant @ 0x03
 		param = 0x03
@@ -105,11 +108,11 @@ class iSobot(object):
 			r = requests.post(url, data={'cmd': cmd}, timeout=5)
 			if r.status_code == 200:
 				if self.debug:
-					print("HTTP Post success!")
+					print("{} - HTTP Post success!".format(self.url))
 			else:
-				print("HTTP Post failed. Status, reason: {}, {}".format(r.status_code, r.reason))
+				print("{} - HTTP Post failed. Status, reason: {}, {}".format(self.url, r.status_code, r.reason))
 		except requests.exceptions.ConnectionError as e:
-			print("HTTP post failed: {}".format(e))
+			print("{} - HTTP post failed: {}".format(self.url, e))
 		except Exception as e:
 			raise e
 
@@ -133,7 +136,7 @@ class iSobot(object):
 		cmd += '\r'
 
 		if self.debug:
-			print("Command string: {}".format(cmd))
+			print("{} - Command string: {}".format(self.url, cmd))
 		return cmd
 
 	def isobotDoType1(self, action, repeat=3):
@@ -142,7 +145,7 @@ class iSobot(object):
 			cmd = self.formatType1Cmd(self.makeCmd(1, action))
 			self.repeatCmd(cmd, repeat)
 		except Exception as e:
-			print("FAILED: action {}, channel {}, repeat {}".format(action, self.channel, repeat))
+			print("{} - FAILED: action {}, repeat {}".format(self.url, action, repeat))
 			raise e
 
 		return True
