@@ -1,124 +1,118 @@
 #include <ESP8266WiFi.h>
 
-//-------------------info about bits-------------------------------
-#define totallength 22 //number of highs/bits 4 channel+18 command
-#define channelstart 0
-#define commandstart 4 //bit where command starts
-#define channellength 4
-#define commandlength 18
-//---------determined empirically--------------
-#define headerlower 2300 //lower limit
-#define headernom 2550 //nominal
-#define headerupper 2800 //upper limit
-#define zerolower 300
-#define zeronom 500 //380 //nominal
-#define zeroupper 650
-#define onelower 800
-#define onenom 1000//850 //nominal
-#define oneupper 1100
-#define highnom 630
-//---------------------pin assignments--------------
-//#define TXpin 7
-#define TXpin 5
-//----------------------variables----------------------
-#define countin 1048576
-boolean bit2[totallength];
+/*-----iSOBOT command decoding variables-----*/
+#define TOTAL_CMD_LENGTH 22 //number of highs/bits 4 channel+18 command
+#define CHANNEL_START_BIT 0
+#define COMMAND_START_BIT 4 //bit where command starts
+#define CHANNEL_LENGTH 4
+#define COMMAND_LENGTH 18
+#define COMMAND_FORMAT "/cmd:"
+
+/*-----iSOBOT IR TX timing variables-----*/
+/*-----determined empirically-----*/
+#define TIME_HEADER_MIN 2300 //lower limit
+#define TIME_HEADER_NOM 2550 //nominal
+#define TIME_HEADER_MAX 2800 //upper limit
+#define TIME_ZERO_MIN 300
+#define TIME_ZERO_NOM 500 //380 //nominal
+#define TIME_ZERO_MAX 650
+#define TIME_ONE_MIN 800
+#define TIME_ONE_NOM 1000//850 //nominal
+#define TIME_ONE_MAX 1100
+#define TIME_HIGH_NOM 630
+
+/*-----Pin Assignments-----*/
+#define IR_TX_PIN 5
+
+/*-----Other variables-----*/
+#define COUNTIN 1048576
+boolean bit2[TOTAL_CMD_LENGTH];
 unsigned long buttonnum;
 unsigned long x = 0;
-unsigned long count = countin;
+unsigned long count = COUNTIN;
 unsigned long buf = 0;
+String httpResponseStatus = "HTTP/1.1 ";
 
-WiFiServer server(80);
+/*-----Wireless Settings-----*/
+WiFiServer server(80);  // port to monitor for commands
 WiFiClient client;
 
-/* Wireless connection settings
- *  ssid - the wireless network name
- *  password - the password to the wireless network
- *  ip - this is the IP address for THIS ESP8266
- *  gateway - the IP address of the ESP8266 configured as WIFI_AP_STA (access point + station)
- *  subnet - the subnet to use on the wireless network - don't change unless you know what you're doing
- *  
- *  If using the iSOBOT_IR_WIFI_AP.ino sketch for the ESP8266 acting as the access point, you can connect
- *  as many ESP8266s to the network as you like simply by changing the fourth # in the 'ip' variable below.
- *  Each ESP8266 will need a unique IP address so every time you upload to a new ESP8266, increment the IP address by 1
- *  
- *  NOTE: DO NOT USE IP 192.168.4.2 - this appears to be reserved for computers
- *        Setting the IP of an ESP8266 to 192.168.4.2 will prevent your laptop from connecting
- */
+// Wireless network name and password
 const char* ssid = "PSU_iSOBOTNET";
 const char* password = "psuisobot";
 
+// Wireless network configuration
+// IP address of this ESP8266. DO NOT USE 192.168.4.2 - will block computers from connecting to network
 IPAddress ip(192, 168, 4, 3);
+// IP address of ESP8266 acting as AP
 IPAddress gateway(192, 168, 4, 1);
+// subnet address - don't change
 IPAddress subnet(255, 255, 255, 0);
 
-String httpResponseStatus = "HTTP/1.1 ";
-
 void setup() {
+  // open Serial port for monitoring/debug purposes.
   Serial.begin(38400);
-  pinMode(TXpin, OUTPUT);
 
+  // Configure TX pin as output
+  pinMode(IR_TX_PIN, OUTPUT);
+
+  // Set up WiFi and launch server
   setupWiFi();
   server.begin();
 }
 
 void loop() {
-
   // Check if client is connected
   client = server.available();
   if (!client) {
+    // No client - skip rest of loop
     return;
   }
 
+  // Client is available - read requests
   // Read the first line of the request
   String req = client.readStringUntil('\r');
+  Serial.println("Request: " + req);
+  // Flush everything else, we don't need it
   client.flush();
+  
+  // Check command format is valid
+  if (req.indexOf(COMMAND_FORMAT) != -1) {
 
-  String cmd = req.substring(10, req.length()-8);
-  if (req.indexOf("/cmd:") != -1) {
+    // Respond OK
     httpResponse(200, "OK");
+
+    // Extract command from request
+    // req will be "POST /cmd:012345%0d" (%0d = \r)
+    String cmd = req.substring(10, req.length()-8);
     
-    
+    // Convert command into 7-char array
     char charBuf[7];
     cmd.toCharArray(charBuf, 7);
+
+    // Convert char array to hex value and drive IR emitter accordingly
+    buttonwrite(IR_TX_PIN, StrToHex(charBuf));
     
-    Serial.print("cmd: ");
-    Serial.println(cmd);
-    Serial.print("charBuf: ");
-    Serial.println(charBuf);
-    Serial.print("charBufToHex: ");
-    Serial.println(StrToHex(charBuf));
-    
-    buttonwrite(TXpin, StrToHex(charBuf));
   } else {
+    // request was not formatted properly
     httpResponse(400, "Bad Request");
   }
 }
 
 void httpResponse(int stat, String reason) {
+  /*helper function for sending HTTP responses*/
   client.print("HTTP/1.1 ");
   client.print(stat);
   client.print(" " + reason + "\r\n");
 }
 
 int StrToHex(char str[]) {
+  /*helper function for converting char array to integer*/
   return (int) strtol(str, 0, 16);
 }
 
-int SerialReadHexDigit(char digit){
-  byte c = (byte) digit;
-  if (c >= '0' && c <= '9') {
-    return c - '0';
-  } else if (c >= 'a' && c <= 'f') {
-    return c - 'a' + 10;
-  } else if (c >= 'A' && c <= 'F') {
-    return c - 'A' + 10;
-  } else {
-    return -1; // non-hexadecimal digit
-  }
-}
-
 void ItoB(unsigned long integer, int length) {
+  /*Convert integery to binary string*/
   //needs bit2[length]
   Serial.println("ItoB");
   for (int i=0; i<length; i++){
@@ -142,15 +136,19 @@ unsigned long power2(int power) { //gives 2 to the (power)
   return integer;
 }
 
-void buttonwrite(int txpin, unsigned long integer) {
+void buttonwrite(int pin, unsigned long integer) {
   //must be full integer (channel + command)
-  ItoB(integer, 22); //must have bit2[22] to hold values
-  oscWrite(txpin, headernom);
-  for(int i=0;i<totallength;i++){
-    if (bit2[i]==0) delayMicroseconds(zeronom);
-    else delayMicroseconds(onenom);
-    oscWrite(txpin, highnom);
+  ItoB(integer, TOTAL_CMD_LENGTH); //must have bit2[22] to hold values
+
+  // Convert binary array to pulses on IR TX pin
+  oscWrite(pin, TIME_HEADER_NOM);
+  for(int i=0;i<TOTAL_CMD_LENGTH;i++){
+    if (bit2[i]==0) delayMicroseconds(TIME_ZERO_NOM);
+    else delayMicroseconds(TIME_ONE_NOM);
+    oscWrite(pin, TIME_HIGH_NOM);
   }
+  
+  // minimum delay between commands
   delay(205);
 }
 
