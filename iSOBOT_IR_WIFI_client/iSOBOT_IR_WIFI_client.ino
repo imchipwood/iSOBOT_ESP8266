@@ -28,10 +28,15 @@ unsigned long x = 0;
 unsigned long count = countin;
 unsigned long buf = 0;
 
-const char WiFiAPPSK[] = "psuisobot";
+const char* ssid = "ESP8266 ISOBOT A";
+const char* password = "psuisobot";
 
 WiFiServer server(80);
 WiFiClient client;
+
+IPAddress ip(192, 168, 4, 4);
+IPAddress gateway(192, 168, 4, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 String httpResponseStatus = "HTTP/1.1 ";
 
@@ -147,23 +152,16 @@ void oscWrite(int pin, int time) { //writes at approx 38khz
 
 void setupWiFi()
 {
-  WiFi.mode(WIFI_AP);
-
-  // Do a little work to get a unique-ish name. Append the
-  // last two bytes of the MAC (HEX'd) to "Thing-":
-  uint8_t mac[WL_MAC_ADDR_LENGTH];
-  WiFi.softAPmacAddress(mac);
-  String macID = String(mac[WL_MAC_ADDR_LENGTH - 2], HEX) +
-                 String(mac[WL_MAC_ADDR_LENGTH - 1], HEX);
-  macID.toUpperCase();
-  String AP_NameString = "ESP8266 ISOBOT " + macID;
-
-  char AP_NameChar[AP_NameString.length() + 1];
-  memset(AP_NameChar, 0, AP_NameString.length() + 1);
-
-  for (int i=0; i<AP_NameString.length(); i++)
-    AP_NameChar[i] = AP_NameString.charAt(i);
-
-  WiFi.softAP(AP_NameChar, WiFiAPPSK);
+  // Connect to existing wifi network
+  WiFi.persistent(false);
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  WiFi.config(ip, gateway, subnet);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(100);
+    Serial.println("still connecting...");
+  }
+  Serial.println("Connected to wifi");
 }
 

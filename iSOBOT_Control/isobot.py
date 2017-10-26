@@ -347,11 +347,11 @@ class iSobot(object):
 			r = requests.post(url, data={'cmd': cmd}, timeout=2)
 			if r.status_code == 200:
 				if self.debug:
-					print("{} - HTTP Post success!".format(self.url))
+					print("{} - HTTP Post success!".format(url.replace('\r', '')))
 			else:
 				print("{} - HTTP Post failed. Status, reason: {}, {}".format(self.url, r.status_code, r.reason))
 		except requests.exceptions.ConnectionError as e:
-			print("{} - HTTP post failed: {}".format(self.url, e))
+			print("{} - HTTP post failed: {}".format(url, e))
 		except Exception as e:
 			raise e
 
