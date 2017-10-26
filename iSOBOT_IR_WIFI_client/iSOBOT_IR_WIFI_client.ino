@@ -28,13 +28,12 @@ unsigned long x = 0;
 unsigned long count = countin;
 unsigned long buf = 0;
 
-const char* ssid = "ESP8266 ISOBOT A";
-const char* password = "psuisobot";
-
 WiFiServer server(80);
 WiFiClient client;
 
 /* Wireless connection settings
+ *  ssid - the wireless network name
+ *  password - the password to the wireless network
  *  ip - this is the IP address for THIS ESP8266
  *  gateway - the IP address of the ESP8266 configured as WIFI_AP_STA (access point + station)
  *  subnet - the subnet to use on the wireless network - don't change unless you know what you're doing
@@ -43,6 +42,9 @@ WiFiClient client;
  *  as many ESP8266s to the network as you like simply by changing the fourth # in the 'ip' variable below.
  *  Each ESP8266 will need a unique IP address so every time you upload to a new ESP8266, increment the IP address by 1
  */
+const char* ssid = "PSU_iSOBOTNET";
+const char* password = "psuisobot";
+
 IPAddress ip(192, 168, 4, 2);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);

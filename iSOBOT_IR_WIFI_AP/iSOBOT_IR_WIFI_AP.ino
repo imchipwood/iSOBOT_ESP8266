@@ -28,7 +28,7 @@ unsigned long x = 0;
 unsigned long count = countin;
 unsigned long buf = 0;
 
-const char* ssid = "ESP8266 ISOBOT A";
+const char* ssid = "PSU_ESP8266_iSOBOTNET";
 const char* password = "psuisobot";
 
 WiFiServer server(80);
