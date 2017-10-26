@@ -1,1 +1,2 @@
 Command,Duration
+CMD_GORILLA,1

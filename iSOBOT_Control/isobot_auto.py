@@ -47,7 +47,7 @@ class iSobotAuto(iSobot):
 			# convert string duration to float
 			duration = float(command[DURATION_KEY])
 
-			print("Executing command {} - {}, {}".format(i, action, duration))
+			print("{} - Executing command {} - {}, {}".format(self.url, i, action, duration))
 
 			if action == COMMAND_SLEEP:
 				time.sleep(duration)

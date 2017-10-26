@@ -1,2 +1,4 @@
 Command,Duration
-CMD_1P,10
+CMD_EAGLE,1
+sleep,4
+CMD_23K,1

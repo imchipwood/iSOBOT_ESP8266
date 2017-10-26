@@ -41,11 +41,14 @@ WiFiClient client;
  *  If using the iSOBOT_IR_WIFI_AP.ino sketch for the ESP8266 acting as the access point, you can connect
  *  as many ESP8266s to the network as you like simply by changing the fourth # in the 'ip' variable below.
  *  Each ESP8266 will need a unique IP address so every time you upload to a new ESP8266, increment the IP address by 1
+ *  
+ *  NOTE: DO NOT USE IP 192.168.4.2 - this appears to be reserved for computers
+ *        Setting the IP of an ESP8266 to 192.168.4.2 will prevent your laptop from connecting
  */
 const char* ssid = "PSU_iSOBOTNET";
 const char* password = "psuisobot";
 
-IPAddress ip(192, 168, 4, 2);
+IPAddress ip(192, 168, 4, 3);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 
@@ -170,7 +173,7 @@ void setupWiFi()
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(100);
+    delay(500);
     Serial.println("still connecting...");
   }
   Serial.println("Connected to wifi");

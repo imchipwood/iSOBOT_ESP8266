@@ -70,19 +70,21 @@ def main(configPaths=None, dbg=None):
 		thread.start()
 		threads.append(thread)
 
-	# wait for all threads to complete, allowing keyboard interrupt to kill
+	# wait for all threads to complete, allow keyboard interrupt to kill
 	try:
 		for thread in threads:
 			thread.join()
 	except KeyboardInterrupt:
+		pass
+	except Exception as e:
+		print(e)
+	finally:
+		# Force all threads to stop
 		for thread in threads:
 			thread.terminate()
 
-	print("All threads complete")
+	print("\nAll processes completed.\n")
 
 
 if __name__ == "__main__":
-	try:
-		main()
-	except KeyboardInterrupt:
-		pass
+	main()
