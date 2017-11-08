@@ -44,13 +44,12 @@ class iSobotAuto(iSobot):
 				continue
 			# convert string command to hex #
 			action = commands[rawcmd]
-			# convert string duration to float
-			duration = float(command[DURATION_KEY])
+			duration = command[DURATION_KEY]
 
 			print("{} - Executing command {} - {}, {}".format(self.url, i, action, duration))
 
 			if action == COMMAND_SLEEP:
-				time.sleep(duration)
+				time.sleep(float(duration))
 			else:
 				self.isobotDoType1(action=action, repeat=int(duration))
 

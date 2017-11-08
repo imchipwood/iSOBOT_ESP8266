@@ -11,6 +11,7 @@ import re
 
 commands = {
 	'sleep': 'sleep',
+	'CMD_SLEEP': 'sleep',
 	'CMD_STOP': 0x00,
 	'CMD_RC': 0x07,
 	'CMD_PM': 0x08,
@@ -230,8 +231,8 @@ commands = {
 	'CMD_HEAD_RIGHT_45': 0xE2,
 	'CMD_HEAD_RIGHT_60': 0xE3,
 	# seems identical to A & B getups
-	'CMD_GETUP_BELLY': 0xE4,
-	'CMD_GETUP_BACK': 0xE5,
+	'CMD_GETUP_BELLY': 0xE4, # sleep for 6 seconds for this one
+	'CMD_GETUP_BACK': 0xE5, # need to sleep for at least 13 seconds after this one - it's a long motion
 	# E6 unknown
 	'CMD_HEAD_SCAN_AND_BEND': 0xE7,
 	'CMD_ARM_TEST': 0xE8,
@@ -344,7 +345,7 @@ class iSobot(object):
 	def sendCmd(self, cmd):
 		try:
 			url = "{}/cmd:{}".format(self._url, cmd)
-			r = requests.post(url, data={'cmd': cmd}, timeout=2)
+			r = requests.post(url, data={'cmd': cmd}, timeout=5)
 			if r.status_code == 200:
 				if self.debug:
 					print("{} - HTTP Post success!".format(url.replace('\r', '')))
@@ -392,14 +393,13 @@ class iSobot(object):
 
 
 if __name__ == "__main__":
-	from isobot_commands import commands as cmds
 	bot = iSobot()
-	commands = [
-		(cmds['CMD_CHEER1'], 1),
+	cmds = [
+		(commands['CMD_CHEER1'], 1),
 		('sleep', 8),
 		(0x00, 2),
-		(cmds['CMD_FWRD'], 10),
-		(cmds['CMD_GORILLA'], 1),
+		(commands['CMD_FWRD'], 10),
+		(commands['CMD_GORILLA'], 1),
 		# (bot.CMD_MOONWALK),
 		# (bot.CMD_42B),
 		# (bot.CMD_1P),
@@ -410,7 +410,7 @@ if __name__ == "__main__":
 		# (bot.CMD_22K),
 	]
 	try:
-		for cmd, repeat in commands:
+		for cmd, repeat in cmds:
 			if isinstance(cmd, str):
 				print('sleeping {}'.format(repeat))
 				time.sleep(repeat)
